@@ -14,15 +14,21 @@ interface JwtClaims {
 export const createRequireAuth = (
   repository: AuthSessionRepository,
   jwtSecret: string,
+  options: { allowQueryToken?: boolean } = {},
 ): RequestHandler =>
   async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const authorization = req.header('authorization');
-      if (!authorization?.startsWith('Bearer ')) {
+      const queryToken = options.allowQueryToken && typeof req.query.access_token === 'string'
+        ? req.query.access_token
+        : undefined;
+      if (!authorization?.startsWith('Bearer ') && !queryToken) {
         throw new AppError('Debes iniciar sesión', 401, 'AUTH_REQUIRED');
       }
 
-      const token = authorization.slice('Bearer '.length).trim();
+      const token = authorization?.startsWith('Bearer ')
+        ? authorization.slice('Bearer '.length).trim()
+        : queryToken!;
       const decoded = jwt.verify(token, jwtSecret) as JwtClaims | string;
       const subject = typeof decoded === 'string' ? undefined : decoded.sub;
       if (!subject) {
@@ -52,4 +58,3 @@ export const requireAdmin: RequestHandler = (req, _res, next) => {
   }
   next();
 };
-

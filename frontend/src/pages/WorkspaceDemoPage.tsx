@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, Download, FileCode, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera, Database } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, FileCode, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera, Database, Server } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { sesionesApi, getApiErrorMessage } from '../services/api';
 import { chatApi } from '../services/chatApi';
@@ -24,6 +24,7 @@ import ValidationReportDrawer from '../components/canvas/ValidationReportDrawer'
 import { classSize } from '../components/canvas/geometry';
 import type { Viewport } from '../components/canvas/UMLCanvas';
 import { downloadBlob, XmiImportResult, xmiApi } from '../services/xmiService';
+import { createClientId } from '../utils/uuid';
 import './Workspace.css';
 
 const UMLCanvas = lazy(() => import('../components/canvas/UMLCanvas'));
@@ -32,6 +33,7 @@ const ImportXmiModal = lazy(() => import('../components/session/ImportXmiModal')
 const ImportPhotoModal = lazy(() => import('../components/session/ImportPhotoModal'));
 const DataModelModal = lazy(() => import('../components/session/DataModelModal'));
 const PostgresDdlModal = lazy(() => import('../components/session/PostgresDdlModal'));
+const SpringProjectModal = lazy(() => import('../components/session/SpringProjectModal'));
 const empty: UMLDiagramAST = { version: 1, classes: [], relationships: [] };
 export default function WorkspaceDemoPage() {
   const { sesionId } = useParams(); const navigate = useNavigate();
@@ -52,6 +54,7 @@ export default function WorkspaceDemoPage() {
   const [isPhotoImportOpen, setIsPhotoImportOpen] = useState(false);
   const [isDataModelOpen, setIsDataModelOpen] = useState(false);
   const [isDdlOpen, setIsDdlOpen] = useState(false);
+  const [isSpringOpen, setIsSpringOpen] = useState(false);
   const [isExportingXmi, setIsExportingXmi] = useState(false);
   const [xmiNotice, setXmiNotice] = useState<{ message: string; error?: boolean } | null>(null);
   const [isVoiceWidgetOpen, setIsVoiceWidgetOpen] = useState(false);
@@ -373,19 +376,19 @@ export default function WorkspaceDemoPage() {
         const position = calculateNextClassPosition(store.classes, view, width, height);
 
         const newClass: UMLClass = {
-          id: crypto.randomUUID(),
+          id: createClientId(),
           name: action.name,
           isAbstract: Boolean(action.isAbstract),
           isInterface: Boolean(action.isInterface),
           attributes: (action.attributes || []).map(att => ({
-            id: crypto.randomUUID(),
+            id: createClientId(),
             name: att.name,
             type: att.type,
             visibility: (att.visibility as UMLVisibility) || '+',
             isPrimaryKey: Boolean(att.isPrimaryKey),
           })),
           methods: (action.methods || []).map(m => ({
-            id: crypto.randomUUID(),
+            id: createClientId(),
             name: m.name,
             returnType: m.returnType,
             visibility: (m.visibility as UMLVisibility) || '+',
@@ -408,7 +411,7 @@ export default function WorkspaceDemoPage() {
           return { success: false, message: `"${cls.name}" ya contiene el atributo "${action.attribute.name}".` };
         }
         store.addAttribute(cls.id, {
-          id: crypto.randomUUID(),
+          id: createClientId(),
           name: action.attribute.name,
           type: action.attribute.type,
           visibility: (action.attribute.visibility as UMLVisibility) || '+',
@@ -427,7 +430,7 @@ export default function WorkspaceDemoPage() {
           return { success: false, message: `"${cls.name}" ya contiene el método "${action.method.name}".` };
         }
         store.addMethod(cls.id, {
-          id: crypto.randomUUID(),
+          id: createClientId(),
           name: action.method.name,
           returnType: action.method.returnType,
           visibility: (action.method.visibility as UMLVisibility) || '+',
@@ -447,7 +450,7 @@ export default function WorkspaceDemoPage() {
           return { success: false, message: `No se encontró la clase destino "${action.targetName}".` };
         }
         store.addRelationship({
-          id: crypto.randomUUID(),
+          id: createClientId(),
           sourceClassId: src.id,
           targetClassId: dst.id,
           type: action.relationshipType,
@@ -480,7 +483,7 @@ export default function WorkspaceDemoPage() {
     while (store.classes.some(c => c.name === base + n)) n++;
     selectMode();
     const width = canvasArea.current?.clientWidth || 600;
-    store.addClass({ id: crypto.randomUUID(), name: base + n, isAbstract: false, isInterface, attributes: [], methods: [],
+    store.addClass({ id: createClientId(), name: base + n, isAbstract: false, isInterface, attributes: [], methods: [],
       position: { x: (Math.max(24, width / 2 - 130) - view.x) / view.scale, y: (100 - view.y) / view.scale + (store.classes.length % 4) * 40 } });
   };
   const download = () => {
@@ -594,6 +597,16 @@ export default function WorkspaceDemoPage() {
             <span>SQL DDL</span>
           </button>
 
+          <button
+            className="uml-spring-btn"
+            aria-label="Generar proyecto Spring Boot 3 y colección Postman"
+            title="Generar backend Spring Boot 3, Postman y abrir el runner"
+            onClick={() => setIsSpringOpen(true)}
+          >
+            <Server size={17} />
+            <span>Spring Boot</span>
+          </button>
+
           {/* Menú Desplegable Modelo */}
           <div className="uml-dropdown-container" ref={modelMenuRef}>
             <button
@@ -624,6 +637,22 @@ export default function WorkspaceDemoPage() {
                   <div className="uml-dropdown-item-text">
                     <span className="uml-dropdown-item-title">Modelo Relacional (3FN)</span>
                     <span className="uml-dropdown-item-desc">Reglas de Tom / TPS / TPH / TPC</span>
+                  </div>
+                </button>
+                <button
+                  role="menuitem"
+                  className="uml-dropdown-item"
+                  aria-label="Generar proyecto Spring Boot y Postman"
+                  onClick={() => {
+                    setIsModelMenuOpen(false);
+                    setIsSpringOpen(true);
+                  }}
+                  title="Generar backend Java en cuatro capas, colección Postman y runner en vivo"
+                >
+                  <Server size={16} />
+                  <div className="uml-dropdown-item-text">
+                    <span className="uml-dropdown-item-title">Proyecto Spring Boot + Postman</span>
+                    <span className="uml-dropdown-item-desc">4 capas / REST CRUD / Runner en vivo</span>
                   </div>
                 </button>
                 <button
@@ -896,6 +925,21 @@ export default function WorkspaceDemoPage() {
         <PostgresDdlModal
           isOpen={isDdlOpen}
           onClose={() => setIsDdlOpen(false)}
+          ast={{
+            version: useDiagramStore.getState().version,
+            nombre: info.proyectoNombre,
+            classes: useDiagramStore.getState().classes,
+            relationships: useDiagramStore.getState().relationships,
+          }}
+          sessionId={sesionId}
+        />
+      </Suspense>
+    ) : null}
+    {isSpringOpen ? (
+      <Suspense fallback={null}>
+        <SpringProjectModal
+          isOpen={isSpringOpen}
+          onClose={() => setIsSpringOpen(false)}
           ast={{
             version: useDiagramStore.getState().version,
             nombre: info.proyectoNombre,

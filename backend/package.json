@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "test": "node --test -r ts-node/register src/cu01.test.ts src/cu03.test.ts src/cu04.test.ts src/cu05.test.ts src/cu06.test.ts src/cu07.test.ts src/cu08.test.ts src/cu09.test.ts src/cu10.test.ts src/cu11.test.ts src/cu12.test.ts",
+    "test": "node --test -r ts-node/register src/cu01.test.ts src/cu03.test.ts src/cu04.test.ts src/cu05.test.ts src/cu06.test.ts src/cu07.test.ts src/cu08.test.ts src/cu09.test.ts src/cu10.test.ts src/cu11.test.ts src/cu12.test.ts src/cu13_14.test.ts",
     "start": "node dist/index.js",
     "seed:admin": "ts-node src/scripts/seed-admin.ts",
     "prisma:generate": "prisma generate",
@@ -29,6 +29,7 @@
     "express": "^4.21.2",
     "fast-xml-parser": "^5.11.1",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.2",
     "multer": "^1.4.5-lts.1",
     "socket.io": "^4.8.1"
   },
@@ -37,6 +38,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/jszip": "^3.4.0",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.2",
     "prisma": "^5.22.0",

@@ -40,7 +40,7 @@ export class DiagramService {
         }
         diagram = await storage.save({ ...incoming, version: diagram.version + 1 });
       }
-      return { diagram, canEdit, proyectoNombre: context.proyectoNombre, sesionNombre: context.sesionNombre };
+      return { diagram, canEdit, isHost: Boolean(context.isHost), proyectoNombre: context.proyectoNombre, sesionNombre: context.sesionNombre };
     });
   }
   async get(sessionId: string, userId: string) { return this.execute(sessionId, userId); }

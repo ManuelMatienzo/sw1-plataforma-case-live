@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { AppliedDiagramOperation, DiagramOperation, PresenceUser, RemoteCursor } from '../types/realtime';
 import { UMLAttribute, UMLClass, UMLDiagramAST, UMLMethod, UMLRelationship, UMLRelationshipType } from '../types/uml';
+import { createClientId } from '../utils/uuid';
 
 export interface SaveSnapshot { epoch: number; revision: number; ast: UMLDiagramAST }
 interface DiagramState extends UMLDiagramAST {
@@ -33,7 +34,7 @@ export const subscribeDiagramOperations = (listener: OperationListener) => {
   operationListeners.add(listener);
   return () => operationListeners.delete(listener);
 };
-const operationId = () => crypto.randomUUID();
+const operationId = () => createClientId();
 const publish = (operation: DiagramOperation) => operationListeners.forEach(listener => listener(operation));
 
 export const useDiagramStore = create<DiagramState>((set, get) => {
@@ -123,7 +124,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => {
           set({ connectingSourceId: null, error: 'Ya existe una relación del mismo tipo entre estas clases.' });
           return;
         }
-        get().addRelationship({ id: crypto.randomUUID(), sourceClassId: source, targetClassId: target, type,
+        get().addRelationship({ id: createClientId(), sourceClassId: source, targetClassId: target, type,
           sourceMultiplicity: '1', targetMultiplicity: '*', isOrthogonal: true });
       }
       set({ connectingSourceId: null });

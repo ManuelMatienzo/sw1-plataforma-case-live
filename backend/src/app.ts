@@ -9,6 +9,7 @@ import { createProyectoSesionesRouter, createSesionesRouter } from './routes/ses
 import { createAiRouter } from './routes/aiRoutes';
 import { createDataModelRouter } from './routes/dataModelRoutes';
 import { createDdlRouter } from './routes/ddlRoutes';
+import { createSpringRouter } from './routes/springRoutes';
 import { AdminService } from './services/adminService';
 import { AuthService } from './services/authService';
 import { ParticipantManagementService } from './services/participantManagementService';
@@ -16,6 +17,8 @@ import { GeminiService } from './services/geminiService';
 import { HybridVisionService } from './services/hybridVisionService';
 import { XmiSessionService } from './services/xmiService';
 import { DiagramService } from './services/diagramaService';
+import { SpringPipelineService } from './services/springPipelineService';
+import { SpringRunnerService } from './services/springRunnerService';
 
 export interface AppServices {
   authService: AuthService;
@@ -28,6 +31,8 @@ export interface AppServices {
   hybridVisionService?: HybridVisionService;
   xmiService?: XmiSessionService;
   diagramService?: DiagramService;
+  springPipelineService?: SpringPipelineService;
+  springRunnerService?: SpringRunnerService;
 }
 
 export const createApp = (services: AppServices) => {
@@ -82,6 +87,16 @@ export const createApp = (services: AppServices) => {
   app.use(
     '/api/ddl',
     createDdlRouter(services.sessionRepository, services.jwtSecret, services.diagramService),
+  );
+  app.use(
+    '/api/spring',
+    createSpringRouter(
+      services.sessionRepository,
+      services.jwtSecret,
+      services.diagramService,
+      services.springPipelineService,
+      services.springRunnerService,
+    ),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);

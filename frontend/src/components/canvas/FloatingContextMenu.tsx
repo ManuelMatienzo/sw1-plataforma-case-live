@@ -2,6 +2,7 @@ import { Plus, Trash2, Link } from 'lucide-react';
 import { useDiagramStore } from '../../store/useDiagramStore';
 import { UMLClass } from '../../types/uml';
 import { classSize } from './geometry';
+import { createClientId } from '../../utils/uuid';
 
 interface Props {
   cls: UMLClass;
@@ -37,14 +38,14 @@ export default function FloatingContextMenu({ cls, x, y, scale, onConnect }: Pro
       }}
     >
       <button 
-        onClick={() => s.addAttribute(cls.id, { id: crypto.randomUUID(), name: 'nuevoAtributo', type: 'Integer', visibility: '-' })}
+        onClick={() => s.addAttribute(cls.id, { id: createClientId(), name: 'nuevoAtributo', type: 'Integer', visibility: '-' })}
         style={btnStyle}
         title="Añadir Atributo"
       >
         <Plus size={16} /> Atributo
       </button>
       <button 
-        onClick={() => s.addMethod(cls.id, { id: crypto.randomUUID(), name: 'nuevoMetodo', returnType: 'void', parameters: [], visibility: '+' })}
+        onClick={() => s.addMethod(cls.id, { id: createClientId(), name: 'nuevoMetodo', returnType: 'void', parameters: [], visibility: '+' })}
         style={btnStyle}
         title="Añadir Método"
       >

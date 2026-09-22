@@ -3,6 +3,7 @@ import { Plus, Trash2, X } from 'lucide-react';
 import { useDiagramStore } from '../../store/useDiagramStore';
 import { relationshipLabels, UMLMultiplicity, UMLRelationshipType, UMLVisibility } from '../../types/uml';
 import SelectTypeModal from './SelectTypeModal';
+import { createClientId } from '../../utils/uuid';
 
 const visibilityOptions = <><option value="+">+ Pública</option><option value="-">− Privada</option><option value="#"># Protegida</option><option value="~">~ Paquete</option></>;
 
@@ -150,7 +151,7 @@ export default function ElementPropertyPanel({ isExpanded = true, editable, conn
       <div className="uml-field-pair">{(['x', 'y'] as const).map(axis => <label key={axis}>Posición {axis.toUpperCase()}<input type="number" step={10} min={-100000} max={100000} value={Math.round(cls.position[axis])}
         onChange={e => s.moveClass(cls.id, axis === 'x' ? Number(e.target.value) : cls.position.x, axis === 'y' ? Number(e.target.value) : cls.position.y)} /></label>)}</div>
       <label>Comentario<textarea value={cls.comment || ''} maxLength={2000} onChange={e => s.updateClass(cls.id, { comment: e.target.value })} /></label>
-      <section><div className="uml-section-heading"><h3>Atributos</h3><button aria-label="Añadir atributo" onClick={() => s.addAttribute(cls.id, { id: crypto.randomUUID(), name: `atributo${cls.attributes.length + 1}`, type: 'Integer', visibility: '-' })}><Plus size={17} /></button></div>
+      <section><div className="uml-section-heading"><h3>Atributos</h3><button aria-label="Añadir atributo" onClick={() => s.addAttribute(cls.id, { id: createClientId(), name: `atributo${cls.attributes.length + 1}`, type: 'Integer', visibility: '-' })}><Plus size={17} /></button></div>
         {cls.attributes.map((a, i) => <details className="uml-member" key={a.id} open>
           <summary>{a.visibility} {a.name}: {a.type}</summary>
           <label>Nombre<input aria-label={`Nombre de atributo ${i + 1}`} value={a.name} maxLength={200} onChange={e => s.updateAttribute(cls.id, a.id, { name: e.target.value })} /></label>
@@ -173,7 +174,7 @@ export default function ElementPropertyPanel({ isExpanded = true, editable, conn
           <button className="uml-delete" onClick={() => s.deleteAttribute(cls.id, a.id)} aria-label={`Eliminar atributo ${a.name}`}><Trash2 size={14} />Eliminar atributo</button>
         </details>)}
       </section>
-      <section><div className="uml-section-heading"><h3>Métodos</h3><button aria-label="Añadir método" onClick={() => s.addMethod(cls.id, { id: crypto.randomUUID(), name: `metodo${cls.methods.length + 1}`, returnType: 'void', visibility: '+', parameters: [] })}><Plus size={17} /></button></div>
+      <section><div className="uml-section-heading"><h3>Métodos</h3><button aria-label="Añadir método" onClick={() => s.addMethod(cls.id, { id: createClientId(), name: `metodo${cls.methods.length + 1}`, returnType: 'void', visibility: '+', parameters: [] })}><Plus size={17} /></button></div>
         {cls.methods.map((m, i) => <details className="uml-member" key={m.id} open>
           <summary>{m.visibility} {m.name}(): {m.returnType}</summary>
           <label>Nombre<input aria-label={`Nombre de método ${i + 1}`} value={m.name} maxLength={200} onChange={e => s.updateMethod(cls.id, m.id, { name: e.target.value })} /></label>

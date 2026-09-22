@@ -470,4 +470,22 @@
   border-color: #60a5fa;
 }
 
+.uml-workspace button.uml-spring-btn {
+  min-height: 34px !important;
+  height: 34px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .35rem .65rem !important;
+  color: #6ee7b7;
+  font-size: .8125rem;
+  font-weight: 500;
+  border-color: rgba(52, 211, 153, .35);
+}
+
+.uml-workspace button.uml-spring-btn:hover {
+  color: #a7f3d0;
+  border-color: #34d399;
+  background: rgba(16, 185, 129, .11);
+}
 
