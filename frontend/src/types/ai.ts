@@ -59,4 +59,6 @@ export interface PhotoImportResult {
   warnings: string[];
   validationReport: UmlValidationReport;
   source?: 'gemini_vision' | 'deterministic_fallback';
+  providerUsed?: 'groq' | 'gemini' | 'demo';
+  latencyMs?: number;
 }

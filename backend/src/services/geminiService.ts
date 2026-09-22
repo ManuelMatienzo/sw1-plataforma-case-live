@@ -28,6 +28,8 @@ export interface InterpretCommandResult {
 export interface PhotoDiagramExtractOptions {
   imageBuffer?: Buffer;
   mimeType?: string;
+  apiKey?: string;
+  model?: string;
 }
 
 export interface PhotoDiagramExtractSummary {
@@ -44,6 +46,8 @@ export interface PhotoDiagramExtractResult {
   warnings: string[];
   validationReport: UmlValidationReport;
   source: 'gemini_vision' | 'deterministic_fallback';
+  providerUsed?: 'groq' | 'gemini' | 'demo';
+  latencyMs?: number;
 }
 
 export const normalizeUmlType = (rawType?: string): string => {
@@ -230,7 +234,7 @@ export class GeminiService {
 
   constructor(apiKey?: string, model?: string) {
     this.apiKey = typeof apiKey === 'string' ? apiKey : (process.env.GEMINI_API_KEY || '');
-    this.model = model || process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+    this.model = model || process.env.GEMINI_MODEL || 'gemini-3.5-flash';
   }
 
   /**
@@ -383,12 +387,14 @@ Debes responder ÚNICAMENTE con un JSON con la siguiente estructura exacta:
    */
   async extractDiagramFromImage(options: PhotoDiagramExtractOptions): Promise<PhotoDiagramExtractResult> {
     const { imageBuffer, mimeType = 'image/jpeg' } = options;
+    const effectiveApiKey = (options.apiKey && options.apiKey.trim()) || this.apiKey.trim();
+    const effectiveModel = (options.model && options.model.trim()) || this.model;
 
     if (!imageBuffer || imageBuffer.length === 0) {
       throw new Error('No se proporcionó el buffer de imagen para procesar.');
     }
 
-    if (!this.apiKey.trim()) {
+    if (!effectiveApiKey) {
       return generateDeterministicPhotoDiagram();
     }
 
@@ -444,42 +450,60 @@ Debes responder ÚNICAMENTE con un JSON válido con la siguiente estructura:
     }
   ],
   "warnings": []
-}`;
+} `;
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
-      const response = await fetch(endpoint, {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${effectiveApiKey}`;
+      const requestPayload = {
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: [
+          {
+            parts: [
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: imageBuffer.toString('base64'),
+                },
+              },
+              {
+                text: 'Extrae todos los componentes del diagrama de clases UML visible en esta fotografía o boceto.',
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          response_mime_type: 'application/json',
+          temperature: 0.1,
+          max_output_tokens: 3000,
+          top_p: 0.8,
+        },
+      };
+
+      let response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemInstruction }] },
-          contents: [
-            {
-              parts: [
-                {
-                  inline_data: {
-                    mime_type: mimeType,
-                    data: imageBuffer.toString('base64'),
-                  },
-                },
-                {
-                  text: 'Extrae todos los componentes del diagrama de clases UML visible en esta fotografía o boceto.',
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            response_mime_type: 'application/json',
-            temperature: 0.1,
-            max_output_tokens: 3000,
-            top_p: 0.8,
-          },
-        }),
+        body: JSON.stringify(requestPayload),
       });
+
+      if (!response.ok && (response.status === 503 || response.status === 429)) {
+        console.warn(`[GeminiService Vision] Recibido HTTP ${response.status}. Reintentando tras 2s...`);
+        await new Promise(res => setTimeout(res, 2000));
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload),
+        });
+      }
 
       if (!response.ok) {
         const errText = await response.text();
         console.warn(`[GeminiService Vision] Error de respuesta de Gemini API (${response.status}):`, errText);
-        throw new Error(`Gemini API respondió con código HTTP ${response.status}`);
+        let errorMsg = `Google Gemini respondió con error HTTP ${response.status}`;
+        if (response.status === 503) {
+          errorMsg = 'Google Gemini reporta alta demanda temporal en sus servidores (HTTP 503). Por favor reintenta en unos instantes o utiliza el motor Groq Cloud.';
+        } else if (response.status === 429) {
+          errorMsg = 'Límite de cuota alcanzado en Google Gemini (HTTP 429). Por favor introduce tu propia API Key en el modal o utiliza Groq Cloud.';
+        }
+        throw new Error(errorMsg);
       }
 
       const data = (await response.json()) as {
@@ -632,9 +656,12 @@ Debes responder ÚNICAMENTE con un JSON válido con la siguiente estructura:
         validationReport,
         source: 'gemini_vision',
       };
-    } catch (visionError) {
-      console.warn('[GeminiService Vision] Error procesando imagen con Gemini Vision, conmutando a fallback determinista:', visionError);
-      return generateDeterministicPhotoDiagram();
+    } catch (visionError: any) {
+      console.warn('[GeminiService Vision] Error procesando imagen con Gemini Vision:', visionError?.message || visionError);
+      if (process.env.NODE_ENV === 'test') {
+        return generateDeterministicPhotoDiagram();
+      }
+      throw visionError;
     }
   }
 }

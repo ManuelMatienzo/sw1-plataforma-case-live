@@ -11,6 +11,7 @@ import { AdminService } from './services/adminService';
 import { AuthService } from './services/authService';
 import { ParticipantManagementService } from './services/participantManagementService';
 import { GeminiService } from './services/geminiService';
+import { HybridVisionService } from './services/hybridVisionService';
 import { XmiSessionService } from './services/xmiService';
 
 export interface AppServices {
@@ -21,6 +22,7 @@ export interface AppServices {
   corsOrigin: string;
   participantService?: ParticipantManagementService;
   geminiService?: GeminiService;
+  hybridVisionService?: HybridVisionService;
   xmiService?: XmiSessionService;
 }
 
@@ -67,7 +69,7 @@ export const createApp = (services: AppServices) => {
   );
   app.use(
     '/api/ia',
-    createAiRouter(services.sessionRepository, services.jwtSecret, services.geminiService),
+    createAiRouter(services.sessionRepository, services.jwtSecret, services.geminiService, services.hybridVisionService),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);

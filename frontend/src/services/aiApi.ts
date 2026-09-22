@@ -1,6 +1,12 @@
 import { apiClient, getApiErrorMessage } from './api';
 import { InterpretCommandResult, PhotoImportResult } from '../types/ai';
 
+export interface ImportPhotoOptions {
+  provider?: 'groq' | 'gemini' | 'auto' | 'demo';
+  groqApiKey?: string;
+  geminiApiKey?: string;
+}
+
 export const aiApi = {
   /**
    * Envía un archivo de audio grabado por el usuario al backend para interpretación
@@ -50,18 +56,32 @@ export const aiApi = {
 
   /**
    * Envía una fotografía o imagen de un diagrama UML al backend para su
-   * digitalización mediante visión por computadora con Google Gemini.
+   * digitalización mediante la Arquitectura Multimodal Híbrida (Groq Cloud / Google Gemini).
    */
-  async importarDiagramaFoto(imageFile: File): Promise<PhotoImportResult> {
+  async importarDiagramaFoto(imageFile: File, options?: ImportPhotoOptions): Promise<PhotoImportResult> {
     const formData = new FormData();
     formData.append('imagen', imageFile, imageFile.name);
 
+    const provider = options?.provider || 'auto';
+    formData.append('provider', provider);
+
+    const groqKey = options?.groqApiKey || localStorage.getItem('groq_api_key') || '';
+    const geminiKey = options?.geminiApiKey || localStorage.getItem('gemini_api_key') || '';
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'multipart/form-data',
+    };
+    if (groqKey.trim()) {
+      headers['x-groq-api-key'] = groqKey.trim();
+    }
+    if (geminiKey.trim()) {
+      headers['x-gemini-api-key'] = geminiKey.trim();
+    }
+
     try {
       const response = await apiClient.post<{ data: PhotoImportResult }>('/ia/importar-foto', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60_000,
+        headers,
+        timeout: 120_000,
       });
       return response.data.data;
     } catch (err) {

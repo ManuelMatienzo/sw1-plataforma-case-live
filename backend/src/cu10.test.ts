@@ -165,6 +165,7 @@ test('CU-10: Endpoint POST /api/ia/importar-foto autenticado procesa imagen mult
     const formData = new FormData();
     const blob = new Blob(['simulated-photo-bytes'], { type: 'image/png' });
     formData.append('imagen', blob, 'pizarra.png');
+    formData.append('provider', 'demo');
 
     const successRes = await fetch(`${baseUrl}/api/ia/importar-foto`, {
       method: 'POST',
@@ -185,3 +186,67 @@ test('CU-10: Endpoint POST /api/ia/importar-foto autenticado procesa imagen mult
     server.close();
   }
 });
+
+test('CU-10: GroqVisionService.parseAndValidateDiagram procesa JSON UML y genera AST válido', () => {
+  const { GroqVisionService } = require('./services/groqVisionService');
+  const service = new GroqVisionService('fake_key');
+  const sampleJson = JSON.stringify({
+    classes: [
+      {
+        name: 'Cliente',
+        attributes: [
+          { name: 'id', type: 'Integer', visibility: '+' },
+          { name: 'nombre', type: 'String', visibility: '+' },
+        ],
+        methods: [
+          { name: 'comprar', returnType: 'void', visibility: '+' },
+        ],
+      },
+      {
+        name: 'Pedido',
+        attributes: [
+          { name: 'id', type: 'Integer', visibility: '+' },
+          { name: 'total', type: 'Double', visibility: '+' },
+        ],
+        methods: [],
+      },
+    ],
+    relationships: [
+      {
+        sourceClassName: 'Cliente',
+        targetClassName: 'Pedido',
+        type: 'ASSOCIATION',
+        sourceMultiplicity: '1',
+        targetMultiplicity: '1..*',
+      },
+    ],
+    warnings: [],
+  });
+
+  const result = service.parseAndValidateDiagram(sampleJson);
+  assert.equal(result.diagram.classes.length, 2);
+  assert.equal(result.diagram.relationships.length, 1);
+  assert.equal(result.diagram.classes[0].name, 'Cliente');
+  assert.equal(result.diagram.classes[1].name, 'Pedido');
+  assert.equal(result.summary.classes, 2);
+  assert.equal(result.summary.relationships, 1);
+  assert.equal(result.validationReport.isValid, true);
+});
+
+test('CU-10: HybridVisionService soporta modo demo explícito y mide latencia', async () => {
+  const { HybridVisionService } = require('./services/hybridVisionService');
+  const hybrid = new HybridVisionService();
+  const dummyBuffer = Buffer.from('fake-image');
+
+  const result = await hybrid.extractDiagram({
+    imageBuffer: dummyBuffer,
+    mimeType: 'image/png',
+    provider: 'demo',
+  });
+
+  assert.equal(result.providerUsed, 'demo');
+  assert.equal(result.source, 'deterministic_fallback');
+  assert.equal(typeof result.latencyMs, 'number');
+  assert.equal(result.summary.classes, 3);
+});
+

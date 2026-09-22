@@ -105,7 +105,7 @@ it('digitaliza con IA, muestra el resumen de clases/relaciones y confirma import
   fireEvent.click(scanButton);
 
   await waitFor(() => {
-    expect(aiApi.importarDiagramaFoto).toHaveBeenCalledWith(file);
+    expect(aiApi.importarDiagramaFoto).toHaveBeenCalledWith(file, expect.anything());
   });
 
   expect(await screen.findByText('Estructura UML Reconocida')).toBeInTheDocument();
