@@ -488,4 +488,20 @@
   border-color: #34d399;
   background: rgba(16, 185, 129, .11);
 }
-
+.uml-workspace button.uml-mobile-btn {
+  min-height: 34px !important;
+  height: 34px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .35rem .65rem !important;
+  color: #93c5fd;
+  font-size: .8125rem;
+  font-weight: 500;
+  border-color: rgba(147, 197, 253, .35);
+}
+.uml-workspace button.uml-mobile-btn:hover {
+  color: #dbeafe;
+  border-color: #93c5fd;
+  background: rgba(59, 130, 246, .11);
+}

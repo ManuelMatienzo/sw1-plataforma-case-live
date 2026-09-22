@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, Download, FileCode, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera, Database, Server } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, FileCode, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera, Database, Server, Smartphone } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { sesionesApi, getApiErrorMessage } from '../services/api';
 import { chatApi } from '../services/chatApi';
@@ -34,6 +34,7 @@ const ImportPhotoModal = lazy(() => import('../components/session/ImportPhotoMod
 const DataModelModal = lazy(() => import('../components/session/DataModelModal'));
 const PostgresDdlModal = lazy(() => import('../components/session/PostgresDdlModal'));
 const SpringProjectModal = lazy(() => import('../components/session/SpringProjectModal'));
+const MobileAppModal = lazy(() => import('../components/session/MobileAppModal'));
 const empty: UMLDiagramAST = { version: 1, classes: [], relationships: [] };
 export default function WorkspaceDemoPage() {
   const { sesionId } = useParams(); const navigate = useNavigate();
@@ -55,6 +56,7 @@ export default function WorkspaceDemoPage() {
   const [isDataModelOpen, setIsDataModelOpen] = useState(false);
   const [isDdlOpen, setIsDdlOpen] = useState(false);
   const [isSpringOpen, setIsSpringOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isExportingXmi, setIsExportingXmi] = useState(false);
   const [xmiNotice, setXmiNotice] = useState<{ message: string; error?: boolean } | null>(null);
   const [isVoiceWidgetOpen, setIsVoiceWidgetOpen] = useState(false);
@@ -607,6 +609,16 @@ export default function WorkspaceDemoPage() {
             <span>Spring Boot</span>
           </button>
 
+          <button
+            className="uml-mobile-btn"
+            aria-label="Generar app móvil PWA con asistente local"
+            title="Generar app móvil PWA, simulador y código QR"
+            onClick={() => setIsMobileOpen(true)}
+          >
+            <Smartphone size={17} />
+            <span>App Móvil</span>
+          </button>
+
           {/* Menú Desplegable Modelo */}
           <div className="uml-dropdown-container" ref={modelMenuRef}>
             <button
@@ -653,6 +665,18 @@ export default function WorkspaceDemoPage() {
                   <div className="uml-dropdown-item-text">
                     <span className="uml-dropdown-item-title">Proyecto Spring Boot + Postman</span>
                     <span className="uml-dropdown-item-desc">4 capas / REST CRUD / Runner en vivo</span>
+                  </div>
+                </button>
+                <button
+                  role="menuitem"
+                  className="uml-dropdown-item"
+                  aria-label="Generar App Móvil PWA con asistente local"
+                  onClick={() => { setIsModelMenuOpen(false); setIsMobileOpen(true); }}
+                >
+                  <Smartphone size={16} />
+                  <div className="uml-dropdown-item-text">
+                    <span className="uml-dropdown-item-title">Generar App Móvil (PWA + IA Offline)</span>
+                    <span className="uml-dropdown-item-desc">CRUD táctil / QR / asistente local</span>
                   </div>
                 </button>
                 <button
@@ -940,6 +964,21 @@ export default function WorkspaceDemoPage() {
         <SpringProjectModal
           isOpen={isSpringOpen}
           onClose={() => setIsSpringOpen(false)}
+          ast={{
+            version: useDiagramStore.getState().version,
+            nombre: info.proyectoNombre,
+            classes: useDiagramStore.getState().classes,
+            relationships: useDiagramStore.getState().relationships,
+          }}
+          sessionId={sesionId}
+        />
+      </Suspense>
+    ) : null}
+    {isMobileOpen ? (
+      <Suspense fallback={null}>
+        <MobileAppModal
+          isOpen={isMobileOpen}
+          onClose={() => setIsMobileOpen(false)}
           ast={{
             version: useDiagramStore.getState().version,
             nombre: info.proyectoNombre,

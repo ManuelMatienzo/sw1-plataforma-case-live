@@ -13,6 +13,7 @@ const live = vi.hoisted(() => ({
 vi.mock('./UMLCanvas', () => ({ default: ({ onCursorMove }: { onCursorMove?: (x: number, y: number) => void }) => <div aria-label="Lienzo UML"><button aria-label="Mover cursor de prueba" onMouseMove={() => onCursorMove?.(80, 90)} /></div> }));
 vi.mock('../session/ManageParticipantsModal', () => ({ default: ({ onClose }: { onClose(): void }) => <div role="dialog" aria-label="Colaboradores de la sesión"><button onClick={onClose}>Cerrar modal de prueba</button></div> }));
 vi.mock('../session/ImportXmiModal', () => ({ default: ({ onImported, onClose }: { onImported(result: unknown): void; onClose(): void }) => <div role="dialog" aria-label="Importar modelo XMI"><button onClick={() => onImported({ diagram: { version: 8, classes: [{ id: 'imported', name: 'Importada', isAbstract: false, isInterface: false, position: { x: 48, y: 48 }, attributes: [], methods: [] }], relationships: [] }, warnings: [], summary: { classes: 1, interfaces: 0, attributes: 0, methods: 0, relationships: 0 }, validationReport: { isValid: true, criticalErrorsCount: 0, warningsCount: 1, diagnostics: [], validatedAt: new Date().toISOString() } })}>Confirmar importación de prueba</button><button onClick={onClose}>Cerrar XMI</button></div> }));
+vi.mock('../session/MobileAppModal', () => ({ default: ({ onClose }: { onClose(): void }) => <div role="dialog" aria-label="App móvil generada"><button onClick={onClose}>Cerrar app móvil</button></div> }));
 vi.mock('../../services/api', () => ({ sesionesApi: { getDiagrama: vi.fn(), saveDiagrama: vi.fn() }, getApiErrorMessage: (_e: unknown, fallback: string) => fallback }));
 vi.mock('../../services/chatApi', () => ({ chatApi: { getHistorial: vi.fn().mockResolvedValue([]) } }));
 vi.mock('../../services/umlSocketClient', () => ({ createUmlSocketClient: (options: Record<string, (...args: never[]) => void>) => { live.options = options; return live.client; } }));
@@ -20,6 +21,16 @@ vi.mock('../../services/xmiService', () => ({ xmiApi: { exportar: vi.fn() }, dow
 afterEach(() => { cleanup(); sessionStorage.clear(); localStorage.clear(); live.options = null; Object.values(live.client).forEach(mock => mock.mockClear()); });
 const data = { diagram: { version: 1, classes: [], relationships: [] }, canEdit: true, proyectoNombre: 'Hospital', sesionNombre: 'Modelo' };
 const open = () => render(<MemoryRouter initialEntries={['/sesion/abc']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><Routes><Route path="/sesion/:sesionId" element={<WorkspaceDemoPage />} /><Route path="/dashboard" element={<div>Dashboard después de la sesión</div>} /></Routes></MemoryRouter>);
+it('abre la generación móvil desde la barra y desde el menú Modelo', async () => {
+  vi.mocked(sesionesApi.getDiagrama).mockResolvedValue(data);
+  open(); await screen.findByText('Hospital');
+  fireEvent.click(screen.getByRole('button', { name: /Generar app móvil PWA/ }));
+  expect(await screen.findByRole('dialog', { name: 'App móvil generada' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Cerrar app móvil' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Menú de modelo y archivos' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: /Generar App Móvil/ }));
+  expect(await screen.findByRole('dialog', { name: 'App móvil generada' })).toBeInTheDocument();
+});
 it('carga una sesión, crea una clase y guarda el AST editado', async () => {
   vi.mocked(sesionesApi.getDiagrama).mockResolvedValue(data);
   vi.mocked(sesionesApi.saveDiagrama).mockImplementation(async (_id, ast) => ({ ...data, diagram: { ...ast, version: 2 } }));

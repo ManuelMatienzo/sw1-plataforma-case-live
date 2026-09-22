@@ -10,6 +10,7 @@ import { createAiRouter } from './routes/aiRoutes';
 import { createDataModelRouter } from './routes/dataModelRoutes';
 import { createDdlRouter } from './routes/ddlRoutes';
 import { createSpringRouter } from './routes/springRoutes';
+import { createMobileAppRoutes } from './routes/mobileAppRoutes';
 import { AdminService } from './services/adminService';
 import { AuthService } from './services/authService';
 import { ParticipantManagementService } from './services/participantManagementService';
@@ -98,6 +99,10 @@ export const createApp = (services: AppServices) => {
       services.springRunnerService,
     ),
   );
+  const mobile = createMobileAppRoutes(services.sessionRepository, services.jwtSecret,
+    services.diagramService, services.springRunnerService);
+  app.use('/api/movil', mobile.apiRouter);
+  app.use('/m', mobile.appRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
 
