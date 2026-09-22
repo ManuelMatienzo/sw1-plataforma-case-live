@@ -35,6 +35,11 @@ export const springApi = {
     downloadResponse(response.data, response.headers['content-disposition'], 'proyecto_backend.zip', 'application/zip');
   },
 
+  async descargarZipDirecto(diagrama: UMLDiagramAST): Promise<void> {
+    const response = await apiClient.post('/spring/generar-directo?format=zip', { diagrama }, { responseType: 'blob', timeout: 30_000 });
+    downloadResponse(response.data, response.headers['content-disposition'], 'proyecto_backend.zip', 'application/zip');
+  },
+
   async descargarPostman(sesionId: string): Promise<void> {
     const response = await apiClient.get(`/spring/sesiones/${sesionId}/postman`, { responseType: 'blob' });
     downloadResponse(response.data, response.headers['content-disposition'], 'coleccion-postman.json', 'application/json');

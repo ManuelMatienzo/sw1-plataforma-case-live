@@ -35,6 +35,13 @@ export const createSpringController = (
   async generarDirecto(req, res) {
     const { diagrama, options, dataModel } = req.body as { diagrama: UMLDiagramAST; options?: Partial<SpringProjectOptions>; dataModel?: any };
     const project = await generator.generate(diagrama, options, dataModel);
+    if (req.query.format === 'zip') {
+      const filename = `${safeFilename(diagrama.nombre ?? options?.artifactId ?? 'proyecto_case')}_backend.zip`;
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.status(200).send(project.zipBuffer);
+      return;
+    }
     res.status(200).json({ data: serializable(project) });
   },
 

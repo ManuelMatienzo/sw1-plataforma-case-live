@@ -198,6 +198,16 @@ test('CU-13: expone generación, ZIP y Postman por HTTP con control de anfitrió
     const directBody = await direct.json() as any;
     assert.equal(directBody.data.summary.entitiesCount, 2);
 
+    const directZip = await fetch(`${base}/generar-directo?format=zip`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ diagrama: diagram, options }),
+    });
+    assert.equal(directZip.status, 200);
+    assert.match(directZip.headers.get('content-disposition') ?? '', /clinica_integral_backend\.zip/);
+    const directZipBytes = new Uint8Array(await directZip.arrayBuffer());
+    assert.deepEqual([...directZipBytes.slice(0, 2)], [0x50, 0x4b]);
+
     const generation = await fetch(`${base}/sesiones/${sessionId}/generar`, { method: 'POST', headers, body: '{}' });
     assert.equal(generation.status, 200);
 

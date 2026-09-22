@@ -112,7 +112,7 @@ export default function SpringProjectModal({ isOpen, onClose, ast, sessionId }: 
 
   const downloadZip = async () => {
     if (sessionId) await springApi.descargarZip(sessionId);
-    else if (project) saveLocal(JSON.stringify(project.files, null, 2), 'proyecto-spring-archivos.json', 'application/json');
+    else if (project) await springApi.descargarZipDirecto(ast);
   };
 
   const downloadPostman = async () => {

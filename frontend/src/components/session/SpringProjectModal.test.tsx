@@ -7,7 +7,7 @@ import type { UMLDiagramAST } from '../../types/uml';
 
 vi.mock('../../services/springApi', () => ({
   springApi: {
-    generarDesdeAst: vi.fn(), generarDesdeSesion: vi.fn(), descargarZip: vi.fn(),
+    generarDesdeAst: vi.fn(), generarDesdeSesion: vi.fn(), descargarZip: vi.fn(), descargarZipDirecto: vi.fn(),
     descargarPostman: vi.fn(), iniciarRunner: vi.fn(), detenerRunner: vi.fn(),
     obtenerEstado: vi.fn(), conectarLogs: vi.fn(() => () => undefined),
   },
@@ -77,5 +77,14 @@ describe('SpringProjectModal (CU-13/CU-14)', () => {
     expect(springApi.descargarPostman).toHaveBeenCalledWith('s');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('descarga un ZIP real también en el modo demo sin sesión', async () => {
+    vi.mocked(springApi.generarDesdeAst).mockResolvedValue(result);
+    render(<SpringProjectModal isOpen onClose={vi.fn()} ast={ast} />);
+    const zipButton = await screen.findByRole('button', { name: /Descargar Proyecto/ });
+    await waitFor(() => expect(zipButton).not.toBeDisabled());
+    fireEvent.click(zipButton);
+    await waitFor(() => expect(springApi.descargarZipDirecto).toHaveBeenCalledWith(ast));
   });
 });
