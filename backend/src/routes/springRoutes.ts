@@ -8,7 +8,7 @@ import { SpringPipelineService } from '../services/springPipelineService';
 import { SpringRunnerService } from '../services/springRunnerService';
 import { asyncHandler } from '../utils/asyncHandler';
 
-const defaultSpringRunner = new SpringRunnerService();
+export const defaultSpringRunner = new SpringRunnerService();
 
 export const createSpringRouter = (
   sessionRepository: AuthSessionRepository,

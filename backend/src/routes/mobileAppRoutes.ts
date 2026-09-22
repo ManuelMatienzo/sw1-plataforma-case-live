@@ -7,14 +7,13 @@ import { DiagramService } from '../services/diagramaService';
 import { MobilePipelineService } from '../services/mobilePipelineService';
 import { SpringRunnerService } from '../services/springRunnerService';
 import { asyncHandler } from '../utils/asyncHandler';
-
-const defaultRunner = new SpringRunnerService();
+import { defaultSpringRunner } from './springRoutes';
 
 export const createMobileAppRoutes = (
   repository: AuthSessionRepository,
   jwtSecret: string,
   diagramService = new DiagramService(createPrismaDiagramRepository(prisma)),
-  runner = defaultRunner,
+  runner = defaultSpringRunner,
   pipeline = new MobilePipelineService(diagramService, runner),
 ) => {
   const apiRouter = Router();

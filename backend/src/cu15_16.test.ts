@@ -190,6 +190,7 @@ test('CU-15: endpoints de sesión exigen anfitrión y devuelven QR y ZIP', async
     sessionRepository: { findSessionUserById: async () => user } as any,
     jwtSecret: secret, corsOrigin: 'http://localhost:5173',
     diagramService: { get: async () => ({ diagram, isHost, proyectoNombre: 'Clínica Integral', sesionNombre: 'Demo' }) } as any,
+    springRunnerService: { getStatus: () => ({ port: 8084 }) } as any,
   });
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
@@ -201,7 +202,10 @@ test('CU-15: endpoints de sesión exigen anfitrión y devuelven QR y ZIP', async
     const forbidden = await fetch(`${base}/generar`, { method: 'POST', headers, body: '{}' });
     assert.equal(forbidden.status, 403);
     isHost = true;
-    assert.equal((await fetch(`${base}/generar`, { method: 'POST', headers, body: '{}' })).status, 200);
+    const generated = await fetch(`${base}/generar`, { method: 'POST', headers, body: '{}' });
+    assert.equal(generated.status, 200);
+    const project = await generated.json() as any;
+    assert.match(project.data.config.backendBaseUrl, /^http:\/\/[^/]+:8084\/api\/v1$/);
     const qr = await fetch(`${base}/qr`, { headers });
     const meta = await qr.json() as any;
     assert.equal(qr.status, 200);
