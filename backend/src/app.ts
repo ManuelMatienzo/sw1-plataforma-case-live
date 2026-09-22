@@ -7,6 +7,7 @@ import { createAuthRouter } from './routes/authRoutes';
 import { createProyectosRouter } from './routes/proyectosRoutes';
 import { createProyectoSesionesRouter, createSesionesRouter } from './routes/sesionesRoutes';
 import { createAiRouter } from './routes/aiRoutes';
+import { createDataModelRouter } from './routes/dataModelRoutes';
 import { AdminService } from './services/adminService';
 import { AuthService } from './services/authService';
 import { ParticipantManagementService } from './services/participantManagementService';
@@ -70,6 +71,10 @@ export const createApp = (services: AppServices) => {
   app.use(
     '/api/ia',
     createAiRouter(services.sessionRepository, services.jwtSecret, services.geminiService, services.hybridVisionService),
+  );
+  app.use(
+    '/api/modelo-datos',
+    createDataModelRouter(services.sessionRepository, services.jwtSecret),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, Download, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera, Database } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { sesionesApi, getApiErrorMessage } from '../services/api';
 import { chatApi } from '../services/chatApi';
@@ -30,6 +30,7 @@ const UMLCanvas = lazy(() => import('../components/canvas/UMLCanvas'));
 const ManageParticipantsModal = lazy(() => import('../components/session/ManageParticipantsModal'));
 const ImportXmiModal = lazy(() => import('../components/session/ImportXmiModal'));
 const ImportPhotoModal = lazy(() => import('../components/session/ImportPhotoModal'));
+const DataModelModal = lazy(() => import('../components/session/DataModelModal'));
 const empty: UMLDiagramAST = { version: 1, classes: [], relationships: [] };
 export default function WorkspaceDemoPage() {
   const { sesionId } = useParams(); const navigate = useNavigate();
@@ -48,6 +49,7 @@ export default function WorkspaceDemoPage() {
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [isXmiImportOpen, setIsXmiImportOpen] = useState(false);
   const [isPhotoImportOpen, setIsPhotoImportOpen] = useState(false);
+  const [isDataModelOpen, setIsDataModelOpen] = useState(false);
   const [isExportingXmi, setIsExportingXmi] = useState(false);
   const [xmiNotice, setXmiNotice] = useState<{ message: string; error?: boolean } | null>(null);
   const [isVoiceWidgetOpen, setIsVoiceWidgetOpen] = useState(false);
@@ -568,6 +570,17 @@ export default function WorkspaceDemoPage() {
             ) : null}
           </button>
 
+          {/* Botón Modelo de Datos Relacional (CU-11) */}
+          <button
+            className="uml-datamodel-btn"
+            aria-label="Generar esquema relacional 3FN (Reglas de Tom)"
+            title="Generar esquema relacional 3FN (Reglas de Tom)"
+            onClick={() => setIsDataModelOpen(true)}
+          >
+            <Database size={17} />
+            <span>BD Relacional</span>
+          </button>
+
           {/* Menú Desplegable Modelo */}
           <div className="uml-dropdown-container" ref={modelMenuRef}>
             <button
@@ -584,6 +597,22 @@ export default function WorkspaceDemoPage() {
 
             {isModelMenuOpen && (
               <div className="uml-dropdown-menu" role="menu">
+                <button
+                  role="menuitem"
+                  className="uml-dropdown-item"
+                  aria-label="Generar modelo relacional 3FN"
+                  onClick={() => {
+                    setIsModelMenuOpen(false);
+                    setIsDataModelOpen(true);
+                  }}
+                  title="Transformación formal UML → Tablas relacionales 3FN (Reglas de Tom)"
+                >
+                  <Database size={16} />
+                  <div className="uml-dropdown-item-text">
+                    <span className="uml-dropdown-item-title">Modelo Relacional (3FN)</span>
+                    <span className="uml-dropdown-item-desc">Reglas de Tom / TPS / TPH / TPC</span>
+                  </div>
+                </button>
                 <button
                   role="menuitem"
                   className="uml-dropdown-item"
@@ -815,6 +844,21 @@ export default function WorkspaceDemoPage() {
           hasExistingDiagram={hasClasses}
           onImported={handlePhotoDiagramImported}
           onClose={() => setIsPhotoImportOpen(false)}
+        />
+      </Suspense>
+    ) : null}
+    {isDataModelOpen ? (
+      <Suspense fallback={null}>
+        <DataModelModal
+          isOpen={isDataModelOpen}
+          onClose={() => setIsDataModelOpen(false)}
+          ast={{
+            version: useDiagramStore.getState().version,
+            nombre: info.proyectoNombre,
+            classes: useDiagramStore.getState().classes,
+            relationships: useDiagramStore.getState().relationships,
+          }}
+          sessionId={sesionId}
         />
       </Suspense>
     ) : null}
