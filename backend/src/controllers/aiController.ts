@@ -4,6 +4,7 @@ import { AppError } from '../errors/AppError';
 
 export interface AiController {
   interpretarComandoVoz(req: Request, res: Response): Promise<void>;
+  importarDiagramaFoto(req: Request, res: Response): Promise<void>;
 }
 
 export const createAiController = (geminiService: GeminiService): AiController => ({
@@ -36,6 +37,32 @@ export const createAiController = (geminiService: GeminiService): AiController =
     });
 
     res.json({
+      data: result,
+    });
+  },
+
+  importarDiagramaFoto: async (req: Request, res: Response): Promise<void> => {
+    const file = req.file;
+
+    if (!file || !file.buffer || file.buffer.length === 0) {
+      throw new AppError('Debes adjuntar una imagen del diagrama.', 400, 'MISSING_IMAGE');
+    }
+
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
+      throw new AppError('Formato de imagen no soportado. Debe ser JPG, PNG o WebP.', 400, 'INVALID_IMAGE_FORMAT');
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      throw new AppError('La imagen no puede exceder 10 MB.', 413, 'IMAGE_TOO_LARGE');
+    }
+
+    const result = await geminiService.extractDiagramFromImage({
+      imageBuffer: file.buffer,
+      mimeType: file.mimetype,
+    });
+
+    res.status(200).json({
       data: result,
     });
   },

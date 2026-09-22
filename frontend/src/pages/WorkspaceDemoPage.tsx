@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, Download, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { sesionesApi, getApiErrorMessage } from '../services/api';
 import { chatApi } from '../services/chatApi';
@@ -10,10 +10,11 @@ import { subscribeDiagramOperations, useDiagramStore } from '../store/useDiagram
 import { useChatStore } from '../store/useChatStore';
 import { UMLClass, UMLDiagramAST, UMLRelationshipType, UMLVisibility } from '../types/uml';
 import type { AppliedDiagramOperation } from '../types/realtime';
-import type { VoiceCommandAction } from '../types/ai';
+import type { PhotoImportResult, VoiceCommandAction } from '../types/ai';
 import { calculateNextClassPosition, normalizeText } from '../services/voiceCommandParser';
 import { validateUmlDiagram } from '../services/umlValidator';
 import type { UmlDiagnostic, UmlValidationReport } from '../types/validation';
+import { mergeUmlDiagrams } from '../utils/diagramMerge';
 import UMLToolbox from '../components/canvas/UMLToolbox';
 import ElementPropertyPanel from '../components/canvas/ElementPropertyPanel';
 import SessionPresenceBar from '../components/canvas/SessionPresenceBar';
@@ -28,6 +29,7 @@ import './Workspace.css';
 const UMLCanvas = lazy(() => import('../components/canvas/UMLCanvas'));
 const ManageParticipantsModal = lazy(() => import('../components/session/ManageParticipantsModal'));
 const ImportXmiModal = lazy(() => import('../components/session/ImportXmiModal'));
+const ImportPhotoModal = lazy(() => import('../components/session/ImportPhotoModal'));
 const empty: UMLDiagramAST = { version: 1, classes: [], relationships: [] };
 export default function WorkspaceDemoPage() {
   const { sesionId } = useParams(); const navigate = useNavigate();
@@ -45,6 +47,7 @@ export default function WorkspaceDemoPage() {
   const [permissionNotice, setPermissionNotice] = useState('');
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [isXmiImportOpen, setIsXmiImportOpen] = useState(false);
+  const [isPhotoImportOpen, setIsPhotoImportOpen] = useState(false);
   const [isExportingXmi, setIsExportingXmi] = useState(false);
   const [xmiNotice, setXmiNotice] = useState<{ message: string; error?: boolean } | null>(null);
   const [isVoiceWidgetOpen, setIsVoiceWidgetOpen] = useState(false);
@@ -488,6 +491,32 @@ export default function WorkspaceDemoPage() {
     const warning = result.warnings.length ? ` · ${result.warnings.length} advertencia${result.warnings.length === 1 ? '' : 's'} de compatibilidad` : '';
     setXmiNotice({ message: `Modelo XMI importado: ${result.summary.classes + result.summary.interfaces} tipos y ${result.summary.relationships} relaciones${warning}.` });
   }, []);
+  const handlePhotoDiagramImported = useCallback((result: PhotoImportResult, strategy: 'replace' | 'merge') => {
+    const store = useDiagramStore.getState();
+    const currentDiagram: UMLDiagramAST = {
+      version: store.version,
+      nombre: store.nombre,
+      classes: store.classes,
+      relationships: store.relationships,
+    };
+
+    const nextDiagram = strategy === 'merge'
+      ? mergeUmlDiagrams(currentDiagram, result.diagram)
+      : result.diagram;
+
+    store.setDiagram(nextDiagram);
+    useDiagramStore.setState({ isDirty: true, revision: store.revision + 1 });
+    setValidationReport(result.validationReport);
+    setIsPhotoImportOpen(false);
+
+    const warningsText = result.warnings.length
+      ? ` · ${result.warnings.length} advertencia${result.warnings.length > 1 ? 's' : ''}`
+      : '';
+
+    setXmiNotice({
+      message: `Diagrama importado desde foto: ${result.summary.classes} clases y ${result.summary.relationships} relaciones${warningsText}. Recuerda guardar para persistir cambios.`,
+    });
+  }, []);
   const exportXmi = useCallback(async () => {
     if (!sesionId || isExportingXmi) return;
     setIsExportingXmi(true); setXmiNotice(null);
@@ -555,6 +584,24 @@ export default function WorkspaceDemoPage() {
 
             {isModelMenuOpen && (
               <div className="uml-dropdown-menu" role="menu">
+                <button
+                  role="menuitem"
+                  className="uml-dropdown-item"
+                  aria-label="Importar diagrama desde foto"
+                  disabled={loading || Boolean(loadError) || saving || !effectiveCanEdit}
+                  onClick={() => {
+                    setIsModelMenuOpen(false);
+                    setIsPhotoImportOpen(true);
+                  }}
+                  title="Digitalizar diagrama de pizarra o papel con IA"
+                >
+                  <Camera size={16} />
+                  <div className="uml-dropdown-item-text">
+                    <span className="uml-dropdown-item-title">Importar desde foto (IA)</span>
+                    <span className="uml-dropdown-item-desc">Visión por computadora / Pizarra</span>
+                  </div>
+                </button>
+
                 {sesionId && isHost && (
                   <button
                     role="menuitem"
@@ -762,6 +809,15 @@ export default function WorkspaceDemoPage() {
     </>}
     {sesionId && isHost && isParticipantsOpen ? <Suspense fallback={null}><ManageParticipantsModal sessionId={sesionId} presenceUsers={presenceUsers} onClose={() => setIsParticipantsOpen(false)} /></Suspense> : null}
     {sesionId && isHost && isXmiImportOpen ? <Suspense fallback={null}><ImportXmiModal sessionId={sesionId} expectedVersion={version} hasExistingDiagram={hasClasses} onImported={handleXmiImported} onClose={() => setIsXmiImportOpen(false)} /></Suspense> : null}
+    {isPhotoImportOpen ? (
+      <Suspense fallback={null}>
+        <ImportPhotoModal
+          hasExistingDiagram={hasClasses}
+          onImported={handlePhotoDiagramImported}
+          onClose={() => setIsPhotoImportOpen(false)}
+        />
+      </Suspense>
+    ) : null}
     <VoiceCommandWidget
       isOpen={isVoiceWidgetOpen}
       onClose={() => setIsVoiceWidgetOpen(false)}

@@ -1,4 +1,5 @@
-import { UMLMultiplicity, UMLRelationshipType } from './uml';
+import { UMLDiagramAST, UMLMultiplicity, UMLRelationshipType } from './uml';
+import { UmlValidationReport } from './validation';
 
 export type VoiceCommandAction =
   | {
@@ -42,4 +43,20 @@ export interface InterpretCommandResult {
   action: VoiceCommandAction;
   transcript: string;
   source: 'gemini' | 'local_fallback';
+}
+
+export interface PhotoImportSummary {
+  classes: number;
+  interfaces: number;
+  attributes: number;
+  methods: number;
+  relationships: number;
+}
+
+export interface PhotoImportResult {
+  diagram: UMLDiagramAST;
+  summary: PhotoImportSummary;
+  warnings: string[];
+  validationReport: UmlValidationReport;
+  source?: 'gemini_vision' | 'deterministic_fallback';
 }

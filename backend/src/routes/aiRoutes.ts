@@ -28,5 +28,11 @@ export const createAiRouter = (
     asyncHandler(controller.interpretarComandoVoz),
   );
 
+  router.post(
+    '/importar-foto',
+    upload.single('imagen'),
+    asyncHandler(controller.importarDiagramaFoto),
+  );
+
   return router;
 };

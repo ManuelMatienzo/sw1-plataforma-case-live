@@ -1,5 +1,5 @@
 import { apiClient, getApiErrorMessage } from './api';
-import { InterpretCommandResult } from '../types/ai';
+import { InterpretCommandResult, PhotoImportResult } from '../types/ai';
 
 export const aiApi = {
   /**
@@ -44,6 +44,28 @@ export const aiApi = {
       return response.data.data;
     } catch (err) {
       const msg = getApiErrorMessage(err, 'No fue posible interpretar la instrucción en lenguaje natural.');
+      throw new Error(msg);
+    }
+  },
+
+  /**
+   * Envía una fotografía o imagen de un diagrama UML al backend para su
+   * digitalización mediante visión por computadora con Google Gemini.
+   */
+  async importarDiagramaFoto(imageFile: File): Promise<PhotoImportResult> {
+    const formData = new FormData();
+    formData.append('imagen', imageFile, imageFile.name);
+
+    try {
+      const response = await apiClient.post<{ data: PhotoImportResult }>('/ia/importar-foto', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 60_000,
+      });
+      return response.data.data;
+    } catch (err) {
+      const msg = getApiErrorMessage(err, 'No fue posible digitalizar el diagrama a partir de la imagen.');
       throw new Error(msg);
     }
   },
