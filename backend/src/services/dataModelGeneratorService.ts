@@ -23,6 +23,24 @@ export const toSnakeCase = (str: string): string => {
     .toLowerCase();
 };
 
+export const pluralizeSpanish = (name: string): string => {
+  if (!name) return '';
+  const parts = name.split('_');
+  const last = parts[parts.length - 1];
+  let pluralLast = last;
+  if (last.endsWith('s') || last.endsWith('x')) {
+    pluralLast = last;
+  } else if (/[aeiouáéíóú]$/i.test(last)) {
+    pluralLast = `${last}s`;
+  } else if (last.endsWith('z')) {
+    pluralLast = `${last.slice(0, -1)}ces`;
+  } else {
+    pluralLast = `${last}es`;
+  }
+  parts[parts.length - 1] = pluralLast;
+  return parts.join('_');
+};
+
 export const mapUmlTypeToSql = (rawType?: string, isPk?: boolean): string => {
   if (isPk) return 'BIGSERIAL';
   if (!rawType || !rawType.trim()) return 'VARCHAR(255)';
@@ -57,7 +75,7 @@ export class DataModelGeneratorService {
    */
   generateDataModel(
     diagram: UMLDiagramAST,
-    options?: { inheritanceStrategy?: InheritanceStrategy },
+    options?: { inheritanceStrategy?: InheritanceStrategy; pluralize?: boolean },
   ): DataModelResult {
     const strategy: InheritanceStrategy = options?.inheritanceStrategy || 'TPS';
     const classes = diagram.classes || [];
@@ -90,7 +108,8 @@ export class DataModelGeneratorService {
         return; // Las hijas se integran en la tabla padre
       }
 
-      const tableName = toSnakeCase(cls.name);
+      const baseName = toSnakeCase(cls.name);
+      const tableName = options?.pluralize ? pluralizeSpanish(baseName) : baseName;
       const columns: RelationalColumn[] = [];
       const foreignKeys: RelationalForeignKey[] = [];
       const indices: RelationalIndex[] = [];

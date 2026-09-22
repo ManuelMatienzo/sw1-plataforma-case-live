@@ -9,6 +9,7 @@ import { createDiagramaController } from '../controllers/diagramaController';
 import { createValidationController } from '../controllers/validationController';
 import { createXmiController } from '../controllers/xmiController';
 import { XmiSessionService } from '../services/xmiService';
+import { createDataModelController } from '../controllers/dataModelController';
 
 import { createChatController } from '../controllers/chatController';
 import { ParticipantManagementService } from '../services/participantManagementService';
@@ -28,11 +29,19 @@ export const createSesionesRouter = (
   const diagram = createDiagramaController(diagramService);
   const validation = createValidationController(diagramService);
   const xmi = createXmiController(xmiService);
+  const dataModel = createDataModelController(diagramService);
+
   router.get('/:sesionId/diagrama', asyncHandler(diagram.obtenerDiagrama));
   router.put('/:sesionId/diagrama', asyncHandler(diagram.guardarDiagrama));
   router.post('/:sesionId/validar', asyncHandler(validation.validarDiagramaSesion));
   router.get('/:sesionId/xmi/exportar', asyncHandler(xmi.exportar));
   router.post('/:sesionId/xmi/importar', asyncHandler(xmi.importar));
+
+  // Rutas de Generación de Modelo de Datos Relacional (CU-11)
+  router.get('/:sesionId/generar/modelo-datos', asyncHandler(dataModel.generarModeloDatosSesion));
+  router.post('/:sesionId/generar/modelo-datos', asyncHandler(dataModel.generarModeloDatosSesion));
+  router.get('/:sesionId/modelo-datos', asyncHandler(dataModel.generarModeloDatosSesion));
+  router.post('/:sesionId/modelo-datos', asyncHandler(dataModel.generarModeloDatosSesion));
 
   router.get('/:sesionId/mensajes', asyncHandler(chatController.listarMensajes));
   router.delete('/:sesionId/mensajes', asyncHandler(chatController.limpiarMensajes));

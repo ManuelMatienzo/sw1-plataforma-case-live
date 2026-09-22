@@ -14,6 +14,7 @@ import { ParticipantManagementService } from './services/participantManagementSe
 import { GeminiService } from './services/geminiService';
 import { HybridVisionService } from './services/hybridVisionService';
 import { XmiSessionService } from './services/xmiService';
+import { DiagramService } from './services/diagramaService';
 
 export interface AppServices {
   authService: AuthService;
@@ -25,6 +26,7 @@ export interface AppServices {
   geminiService?: GeminiService;
   hybridVisionService?: HybridVisionService;
   xmiService?: XmiSessionService;
+  diagramService?: DiagramService;
 }
 
 export const createApp = (services: AppServices) => {
@@ -66,7 +68,7 @@ export const createApp = (services: AppServices) => {
   );
   app.use(
     '/api/sesiones',
-    createSesionesRouter(services.sessionRepository, services.jwtSecret, undefined, undefined, services.participantService, services.xmiService),
+    createSesionesRouter(services.sessionRepository, services.jwtSecret, services.diagramService, undefined, services.participantService, services.xmiService),
   );
   app.use(
     '/api/ia',

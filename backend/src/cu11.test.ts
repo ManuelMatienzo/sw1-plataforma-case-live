@@ -5,6 +5,7 @@ import {
   DataModelGeneratorService,
   mapUmlTypeToSql,
   toSnakeCase,
+  pluralizeSpanish,
 } from './services/dataModelGeneratorService';
 import { UMLDiagramAST } from './models/uml.types';
 import { createApp } from './app';
@@ -448,3 +449,119 @@ test('CU-11: Endpoints POST /api/modelo-datos/generar-directo y /api/modelo-dato
     server.close();
   }
 });
+
+test('CU-11: Soporte para pluralización de tablas en español', () => {
+  assert.equal(pluralizeSpanish('paciente'), 'pacientes');
+  assert.equal(pluralizeSpanish('pedido'), 'pedidos');
+  assert.equal(pluralizeSpanish('doctor'), 'doctores');
+  assert.equal(pluralizeSpanish('ciudad'), 'ciudades');
+  assert.equal(pluralizeSpanish('historia_clinica'), 'historia_clinicas');
+  assert.equal(pluralizeSpanish('consulta_medica'), 'consulta_medicas');
+
+  const service = new DataModelGeneratorService();
+  const diagram: UMLDiagramAST = {
+    version: 1,
+    classes: [
+      {
+        id: 'c1',
+        name: 'Paciente',
+        isAbstract: false,
+        isInterface: false,
+        position: { x: 0, y: 0 },
+        attributes: [{ id: 'a1', name: 'nombre', type: 'String', visibility: '+' }],
+        methods: [],
+      },
+    ],
+    relationships: [],
+  };
+
+  const resultPlural = service.generateDataModel(diagram, { pluralize: true });
+  assert.equal(resultPlural.tables[0].name, 'pacientes');
+
+  const resultSingular = service.generateDataModel(diagram, { pluralize: false });
+  assert.equal(resultSingular.tables[0].name, 'paciente');
+});
+
+test('CU-11: Endpoint /api/sesiones/:sesionId/generar/modelo-datos responde correctamente', async () => {
+  const mockUser = {
+    id: 'user_cu11_session',
+    email: 'user_cu11_session@test.com',
+    nombre: 'User CU11',
+    rol: 'ANFITRION',
+    activo: true,
+  };
+
+  const sampleDiagram: UMLDiagramAST = {
+    version: 1,
+    classes: [
+      {
+        id: 'c1',
+        name: 'Factura',
+        isAbstract: false,
+        isInterface: false,
+        position: { x: 0, y: 0 },
+        attributes: [{ id: 'a1', name: 'monto', type: 'Double', visibility: '+' }],
+        methods: [],
+      },
+    ],
+    relationships: [],
+  };
+
+  const mockDiagramService: any = {
+    get: async () => ({
+      version: 1,
+      diagram: sampleDiagram,
+      canEdit: true,
+      revision: 1,
+    }),
+  };
+
+  const app = createApp({
+    authService: {} as any,
+    adminService: {} as any,
+    corsOrigin: 'http://localhost:5173',
+    jwtSecret,
+    sessionRepository: {
+      findSessionUserById: async (id: string) => (id === mockUser.id ? mockUser : null),
+    } as any,
+    diagramService: mockDiagramService,
+  });
+
+  const server = app.listen(0);
+  await new Promise(r => server.once('listening', r));
+  const port = (server.address() as any).port;
+  const baseUrl = `http://127.0.0.1:${port}`;
+
+  try {
+    const token = jwt.sign({ sub: mockUser.id }, jwtSecret);
+
+    // 1. GET /api/sesiones/:sesionId/generar/modelo-datos -> 200
+    const getRes = await fetch(`${baseUrl}/api/sesiones/sesion-123/generar/modelo-datos?strategy=TPS`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    assert.equal(getRes.status, 200);
+    const getJson = (await getRes.json()) as any;
+    assert.ok(getJson.data);
+    assert.equal(getJson.data.tables.length, 1);
+    assert.equal(getJson.data.tables[0].name, 'factura');
+
+    // 2. POST /api/sesiones/:sesionId/generar/modelo-datos -> 200
+    const postRes = await fetch(`${baseUrl}/api/sesiones/sesion-123/generar/modelo-datos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ pluralize: true }),
+    });
+    assert.equal(postRes.status, 200);
+    const postJson = (await postRes.json()) as any;
+    assert.equal(postJson.data.tables[0].name, 'facturas');
+  } finally {
+    server.close();
+  }
+});
+

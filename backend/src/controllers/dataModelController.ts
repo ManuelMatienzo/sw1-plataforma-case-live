@@ -25,7 +25,21 @@ export function createDataModelController(
       const sessionId = String(req.params.sesionId);
 
       const body = (req.body || {}) as Record<string, unknown>;
-      const estrategiaHerencia = (body.estrategiaHerencia as InheritanceStrategy) || 'TPS';
+      const query = (req.query || {}) as Record<string, string | undefined>;
+      const opts = (body.options || {}) as Record<string, unknown>;
+
+      const estrategiaHerencia = (
+        body.estrategiaHerencia ||
+        opts.inheritanceStrategy ||
+        query.estrategiaHerencia ||
+        query.strategy
+      ) as InheritanceStrategy || 'TPS';
+
+      const pluralize = Boolean(
+        body.pluralize ??
+        opts.pluralize ??
+        (query.pluralize === 'true')
+      );
 
       let ast: UMLDiagramAST;
 
@@ -48,6 +62,7 @@ export function createDataModelController(
 
       const modelResult = generatorService.generateDataModel(ast, {
         inheritanceStrategy: estrategiaHerencia,
+        pluralize,
       });
 
       res.status(200).json({
@@ -57,7 +72,21 @@ export function createDataModelController(
 
     generarModeloDatosDirecto: async (req, res) => {
       const body = (req.body || {}) as Record<string, unknown>;
-      const estrategiaHerencia = (body.estrategiaHerencia as InheritanceStrategy) || 'TPS';
+      const query = (req.query || {}) as Record<string, string | undefined>;
+      const opts = (body.options || {}) as Record<string, unknown>;
+
+      const estrategiaHerencia = (
+        body.estrategiaHerencia ||
+        opts.inheritanceStrategy ||
+        query.estrategiaHerencia ||
+        query.strategy
+      ) as InheritanceStrategy || 'TPS';
+
+      const pluralize = Boolean(
+        body.pluralize ??
+        opts.pluralize ??
+        (query.pluralize === 'true')
+      );
 
       const astInput = (body.diagrama && typeof body.diagrama === 'object') ? body.diagrama : body;
       const ast = parseDiagram(astInput);
@@ -68,6 +97,7 @@ export function createDataModelController(
 
       const modelResult = generatorService.generateDataModel(ast, {
         inheritanceStrategy: estrategiaHerencia,
+        pluralize,
       });
 
       res.status(200).json({
