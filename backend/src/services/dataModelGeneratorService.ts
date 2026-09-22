@@ -148,6 +148,7 @@ export class DataModelGeneratorService {
           isForeignKey: false,
           isNullable,
           isUnique,
+          defaultValue: attr.defaultValue,
           sourceAttributeName: attr.name,
         });
 
@@ -168,7 +169,8 @@ export class DataModelGeneratorService {
         const parentId = childToParent.get(cls.id);
         if (parentId && classMap.has(parentId)) {
           const parentClass = classMap.get(parentId)!;
-          const parentTable = toSnakeCase(parentClass.name);
+          const parentBase = toSnakeCase(parentClass.name);
+          const parentTable = options?.pluralize ? pluralizeSpanish(parentBase) : parentBase;
 
           // Ajustar la PK para que sea FK hacia la superclase
           const pkCol = columns.find(c => c.isPrimaryKey);
@@ -299,8 +301,24 @@ export class DataModelGeneratorService {
       // CASO A: Relación Muchos a Muchos (N:M) -> Tabla intermedia (Regla 3 de Tom)
       if (srcMany && dstMany) {
         const junctionName = `${srcTable.name}_${dstTable.name}`;
-        const srcFkColName = `${srcTable.name}_id`;
-        const dstFkColName = `${dstTable.name}_id`;
+        const srcBase = srcTable.sourceClassName
+          ? toSnakeCase(srcTable.sourceClassName)
+          : srcTable.name.endsWith('es')
+            ? srcTable.name.slice(0, -2)
+            : srcTable.name.endsWith('s')
+              ? srcTable.name.slice(0, -1)
+              : srcTable.name;
+
+        const dstBase = dstTable.sourceClassName
+          ? toSnakeCase(dstTable.sourceClassName)
+          : dstTable.name.endsWith('es')
+            ? dstTable.name.slice(0, -2)
+            : dstTable.name.endsWith('s')
+              ? dstTable.name.slice(0, -1)
+              : dstTable.name;
+
+        const srcFkColName = `${srcBase}_id`;
+        const dstFkColName = `${dstBase}_id`;
 
         const junctionTable: RelationalTable = {
           id: `tbl-junction-${relIdx + 1}`,
@@ -383,12 +401,20 @@ export class DataModelGeneratorService {
         targetTable = dstTable;
       }
 
-      const fkBaseName = rel.name ? toSnakeCase(rel.name) : `${targetTable.name}_id`;
+      const targetBase = targetTable.sourceClassName
+        ? toSnakeCase(targetTable.sourceClassName)
+        : targetTable.name.endsWith('es')
+          ? targetTable.name.slice(0, -2)
+          : targetTable.name.endsWith('s')
+            ? targetTable.name.slice(0, -1)
+            : targetTable.name;
+
+      const fkBaseName = rel.name ? toSnakeCase(rel.name) : `${targetBase}_id`;
       let fkColName = fkBaseName.endsWith('_id') ? fkBaseName : `${fkBaseName}_id`;
 
       // Evitar colisión de nombres de columna
       if (ownerTable.columns.some(c => c.name === fkColName)) {
-        fkColName = `${targetTable.name}_${relIdx + 1}_id`;
+        fkColName = `${targetBase}_${relIdx + 1}_id`;
       }
 
       const isComposition = rel.type === 'COMPOSITION';
@@ -396,7 +422,10 @@ export class DataModelGeneratorService {
 
       // Composición: NOT NULL + CASCADE (Regla 5 de Tom)
       // Agregación: NULLABLE + SET NULL
-      const isNullable = isComposition ? false : true;
+      // Si la multiplicidad del padre es obligatoria ('1'), es NOT NULL (isNullable = false)
+      const parentMultiplicity = dstMany ? rel.sourceMultiplicity : rel.targetMultiplicity;
+      const isMandatory = isComposition || parentMultiplicity === '1';
+      const isNullable = !isMandatory;
       const onDelete = isComposition ? 'CASCADE' : isAggregation ? 'SET NULL' : 'RESTRICT';
 
       ownerTable.columns.push({

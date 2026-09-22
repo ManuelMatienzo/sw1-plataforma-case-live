@@ -10,6 +10,7 @@ import { createValidationController } from '../controllers/validationController'
 import { createXmiController } from '../controllers/xmiController';
 import { XmiSessionService } from '../services/xmiService';
 import { createDataModelController } from '../controllers/dataModelController';
+import { createDdlController } from '../controllers/ddlController';
 
 import { createChatController } from '../controllers/chatController';
 import { ParticipantManagementService } from '../services/participantManagementService';
@@ -42,6 +43,12 @@ export const createSesionesRouter = (
   router.post('/:sesionId/generar/modelo-datos', asyncHandler(dataModel.generarModeloDatosSesion));
   router.get('/:sesionId/modelo-datos', asyncHandler(dataModel.generarModeloDatosSesion));
   router.post('/:sesionId/modelo-datos', asyncHandler(dataModel.generarModeloDatosSesion));
+
+  // Rutas de Generación y Descarga de Script DDL PostgreSQL (CU-12)
+  const ddl = createDdlController(diagramService);
+  router.get('/:sesionId/generar/ddl', asyncHandler(ddl.generarDdlSesion));
+  router.post('/:sesionId/generar/ddl', asyncHandler(ddl.generarDdlSesion));
+  router.get('/:sesionId/ddl/descargar', asyncHandler(ddl.descargarDdlSesion));
 
   router.get('/:sesionId/mensajes', asyncHandler(chatController.listarMensajes));
   router.delete('/:sesionId/mensajes', asyncHandler(chatController.limpiarMensajes));

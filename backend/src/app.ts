@@ -8,6 +8,7 @@ import { createProyectosRouter } from './routes/proyectosRoutes';
 import { createProyectoSesionesRouter, createSesionesRouter } from './routes/sesionesRoutes';
 import { createAiRouter } from './routes/aiRoutes';
 import { createDataModelRouter } from './routes/dataModelRoutes';
+import { createDdlRouter } from './routes/ddlRoutes';
 import { AdminService } from './services/adminService';
 import { AuthService } from './services/authService';
 import { ParticipantManagementService } from './services/participantManagementService';
@@ -77,6 +78,10 @@ export const createApp = (services: AppServices) => {
   app.use(
     '/api/modelo-datos',
     createDataModelRouter(services.sessionRepository, services.jwtSecret),
+  );
+  app.use(
+    '/api/ddl',
+    createDdlRouter(services.sessionRepository, services.jwtSecret, services.diagramService),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);

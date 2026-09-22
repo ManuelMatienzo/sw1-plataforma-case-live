@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, Download, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera, Database } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, FileCode, FileDown, FileUp, FolderDown, Network, Save, ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen, Sun, Moon, MessageSquare, Users, Mic, ShieldCheck, Camera, Database } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { sesionesApi, getApiErrorMessage } from '../services/api';
 import { chatApi } from '../services/chatApi';
@@ -31,6 +31,7 @@ const ManageParticipantsModal = lazy(() => import('../components/session/ManageP
 const ImportXmiModal = lazy(() => import('../components/session/ImportXmiModal'));
 const ImportPhotoModal = lazy(() => import('../components/session/ImportPhotoModal'));
 const DataModelModal = lazy(() => import('../components/session/DataModelModal'));
+const PostgresDdlModal = lazy(() => import('../components/session/PostgresDdlModal'));
 const empty: UMLDiagramAST = { version: 1, classes: [], relationships: [] };
 export default function WorkspaceDemoPage() {
   const { sesionId } = useParams(); const navigate = useNavigate();
@@ -50,6 +51,7 @@ export default function WorkspaceDemoPage() {
   const [isXmiImportOpen, setIsXmiImportOpen] = useState(false);
   const [isPhotoImportOpen, setIsPhotoImportOpen] = useState(false);
   const [isDataModelOpen, setIsDataModelOpen] = useState(false);
+  const [isDdlOpen, setIsDdlOpen] = useState(false);
   const [isExportingXmi, setIsExportingXmi] = useState(false);
   const [xmiNotice, setXmiNotice] = useState<{ message: string; error?: boolean } | null>(null);
   const [isVoiceWidgetOpen, setIsVoiceWidgetOpen] = useState(false);
@@ -581,6 +583,17 @@ export default function WorkspaceDemoPage() {
             <span>BD Relacional</span>
           </button>
 
+          {/* Botón Script DDL PostgreSQL (CU-12) */}
+          <button
+            className="uml-ddl-btn"
+            aria-label="Generar script DDL PostgreSQL 15+ (Idempotente)"
+            title="Generar script DDL PostgreSQL 15+ (Idempotente)"
+            onClick={() => setIsDdlOpen(true)}
+          >
+            <FileCode size={17} />
+            <span>SQL DDL</span>
+          </button>
+
           {/* Menú Desplegable Modelo */}
           <div className="uml-dropdown-container" ref={modelMenuRef}>
             <button
@@ -611,6 +624,22 @@ export default function WorkspaceDemoPage() {
                   <div className="uml-dropdown-item-text">
                     <span className="uml-dropdown-item-title">Modelo Relacional (3FN)</span>
                     <span className="uml-dropdown-item-desc">Reglas de Tom / TPS / TPH / TPC</span>
+                  </div>
+                </button>
+                <button
+                  role="menuitem"
+                  className="uml-dropdown-item"
+                  aria-label="Generar script DDL PostgreSQL"
+                  onClick={() => {
+                    setIsModelMenuOpen(false);
+                    setIsDdlOpen(true);
+                  }}
+                  title="Generar script DDL SQL para PostgreSQL 15+ (Idempotente)"
+                >
+                  <FileCode size={16} />
+                  <div className="uml-dropdown-item-text">
+                    <span className="uml-dropdown-item-title">Script DDL (PostgreSQL)</span>
+                    <span className="uml-dropdown-item-desc">schema.sql / Idempotente / Índices</span>
                   </div>
                 </button>
                 <button
@@ -852,6 +881,21 @@ export default function WorkspaceDemoPage() {
         <DataModelModal
           isOpen={isDataModelOpen}
           onClose={() => setIsDataModelOpen(false)}
+          ast={{
+            version: useDiagramStore.getState().version,
+            nombre: info.proyectoNombre,
+            classes: useDiagramStore.getState().classes,
+            relationships: useDiagramStore.getState().relationships,
+          }}
+          sessionId={sesionId}
+        />
+      </Suspense>
+    ) : null}
+    {isDdlOpen ? (
+      <Suspense fallback={null}>
+        <PostgresDdlModal
+          isOpen={isDdlOpen}
+          onClose={() => setIsDdlOpen(false)}
           ast={{
             version: useDiagramStore.getState().version,
             nombre: info.proyectoNombre,

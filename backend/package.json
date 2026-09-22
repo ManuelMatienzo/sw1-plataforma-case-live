@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "test": "node --test -r ts-node/register src/cu01.test.ts src/cu03.test.ts src/cu04.test.ts src/cu05.test.ts src/cu06.test.ts src/cu07.test.ts src/cu08.test.ts src/cu09.test.ts src/cu10.test.ts src/cu11.test.ts",
+    "test": "node --test -r ts-node/register src/cu01.test.ts src/cu03.test.ts src/cu04.test.ts src/cu05.test.ts src/cu06.test.ts src/cu07.test.ts src/cu08.test.ts src/cu09.test.ts src/cu10.test.ts src/cu11.test.ts src/cu12.test.ts",
     "start": "node dist/index.js",
     "seed:admin": "ts-node src/scripts/seed-admin.ts",
     "prisma:generate": "prisma generate",
