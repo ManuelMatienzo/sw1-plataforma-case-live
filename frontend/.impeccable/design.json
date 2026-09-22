@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "CASE IA",
+  "direction": "Técnica, sobria y académica; simple, elegante y con un único gesto visual llamativo.",
+  "colors": {
+    "background": "#0B0F1A",
+    "surface": "#111827",
+    "surfaceSubtle": "#172033",
+    "border": "#2B3A52",
+    "textPrimary": "#F4F7FF",
+    "textSecondary": "#A5B4CC",
+    "textMuted": "#7F91AD",
+    "accent": "#405BD6",
+    "accentHover": "#4A66E0",
+    "focus": "#9DB0FF",
+    "success": "#22D3A0",
+    "warning": "#F4C76B",
+    "error": "#FF8A99",
+    "overlay": "rgba(4, 7, 13, 0.78)"
+  },
+  "typography": {
+    "sans": "Sora",
+    "mono": "JetBrains Mono",
+    "titleWeights": [600, 700],
+    "bodyWeight": 400,
+    "delivery": "local-woff2"
+  },
+  "layout": {
+    "contentMaxWidth": "1200px",
+    "hero": "two-columns-desktop, copy-first-mobile",
+    "bodyMeasure": "65-70ch",
+    "radii": ["8px", "12px"]
+  },
+  "motion": {
+    "allowed": ["single-flow-line-reveal"],
+    "reducedMotion": "no-animation"
+  },
+  "surfaces": {
+    "login": "split-context-form-desktop, form-first-mobile",
+    "admin": "operate-mode, sidebar-desktop, compact-nav-mobile, data-tables",
+    "dialog": "focus-trap, escape-close, restore-opener-focus",
+    "umlEditor": {
+      "brief": ".impeccable/surfaces/uml-editor.md",
+      "routes": {
+        "/app": "local-demo, server-save-disabled, json-download",
+        "/sesion/:sesionId": "session-diagram, load-and-save, permission-aware"
+      },
+      "layout": "viewport-workspace, compact-header, wrapping-toolbar, central-canvas, properties-right",
+      "propertiesWidth": "320px",
+      "responsive": [
+        { "maxWidth": "850px", "propertiesWidth": "280px" },
+        { "maxWidth": "620px", "layout": "properties-below-canvas, vertical-document-scroll", "canvasHeight": "52svh", "canvasMinHeight": "320px" }
+      ],
+      "canvas": "lazy-loaded, inherited-css-color-tokens, dot-grid, pan-and-zoom, no-decorative-animation",
+      "classes": "three-compartments, Sora-class-name, JetBrains-Mono-signatures, focus-selection-and-anchors",
+      "accessibility": "html-element-list-for-keyboard-selection-and-connections, property-fields-for-position-and-members",
+      "states": "loading, empty, read-only, dirty, saving, saved-version, recoverable-error, explicit-draft-restoration",
+      "actions": "primary-save, json-download, cancel-connection, inline-class-deletion-confirmation",
+      "collaboration": {
+        "scope": "authenticated-session-presence, absent-in-local-demo",
+        "presence": "header, up-to-five-initial-avatars, names, role-or-permission-tooltips, additional-count",
+        "connectionStates": {
+          "connecting": "Conectando…",
+          "online": "participant-count, en-línea, success-token",
+          "offline": "Sin conexión en vivo"
+        },
+        "saveStatus": "independent-from-live-connection-status",
+        "responsive": [
+          { "maxWidth": "850px", "presence": "names-hidden, avatars-and-tooltips-retained" },
+          { "maxWidth": "620px", "presence": "full-width-header-row, status-before-avatars" }
+        ],
+        "remoteCursors": "Konva-layer-listening-false, pointer-and-Sora-name, follows-pan-and-zoom, no-decorative-animation",
+        "identityPalette": {
+          "source": "backend/src/sockets/umlSocket.ts",
+          "colors": ["#22D3A0", "#F4C76B", "#FF8A99", "#9DB0FF", "#56B4E9", "#E69F00"],
+          "purpose": "shared-avatar-and-cursor-identity, not-status-or-permission",
+          "assignment": "server-assigned, may-repeat, accompanied-by-initial-or-name"
+        },
+        "notices": {
+          "offline": "warning-soft, status, local-changes-until-reconnection",
+          "error": "error-soft, alert, dismissible",
+          "conflict": "accent-soft, status, winning-participant-name, Entendido-action"
+        },
+        "permissions": "live-restrictions-or-revoked-access-disable-mutation-and-save, selection-and-inspection-remain-available",
+        "participantManagement": {
+          "entry": "host-only-header-action, Colaboradores",
+          "modal": "existing-elevated-surface-overlay-border-and-dialog-shadow, 46rem-max-width, internal-scroll, 44px-min-control-height",
+          "responsive": {
+            "maxWidth": "620px",
+            "layout": "bottom-anchored, full-width, 92svh-max-height, permissions-and-remove-below-identity"
+          },
+          "hierarchy": "monospaced-access-code-with-copy-feedback, participant-count, separated-rows, host-first, collaborators-sorted-by-name",
+          "host": "shield-and-warning-colored-label, fixed-full-editing, no-permission-or-remove-controls",
+          "presence": "initial-avatar-name-email, written-online-or-offline-state-with-dot, live-identity-color, success-online-state, muted-offline-state",
+          "permissions": "labeled-Edición-or-Solo-lectura-selector, pencil-or-eye-icon, controls-disabled-while-pending, rollback-and-modal-alert-on-failure",
+          "permissionNotice": "editor-status, accent-soft, Entendido-action",
+          "removal": "same-modal-confirmation, named-participant-and-access-consequences, initial-focus-on-Cancelar, error-colored-confirmation, Removiendo-pending-label",
+          "keyboard": "tab-focus-trap, restore-opener-focus-on-close, escape-cancels-or-closes-unless-pending",
+          "kickedNotice": "dashboard-redirect, received-message, dismissible-status, elevated-surface, accent-left-border"
+        }
+      },
+      "xmiInterchange": {
+        "scope": "session-host-only, hidden-in-local-demo-and-for-collaborators",
+        "entry": "compact-header-import-and-export-actions, blocked-while-local-changes-are-dirty",
+        "modal": "40rem-elevated-dialog, drag-or-file-selection, 5MB-limit, file-metadata-and-monospaced-count-summary",
+        "strategies": "merge-default-preserves-existing-model, replace-explicitly-warns-about-substitution",
+        "responsive": {
+          "maxWidth": "640px",
+          "layout": "bottom-anchored-full-width-dialog, stacked-strategies-and-actions, 94svh-max-height"
+        },
+        "keyboard": "focus-trap, escape-close-unless-busy, opener-focus-restored",
+        "architecture": "browser-preview-counts-only, backend-canonical-parse-normalize-merge-validate-persist",
+        "realtime": "atomic-diagram-replaced-event-with-summary-warnings-and-validation-report",
+        "feedback": "success-soft-status, error-soft-alert, content-disposition-filename"
+      }
+    }
+  },
+  "avoid": [
+    "glassmorphism",
+    "gradient-text",
+    "decorative-halos",
+    "repetitive-card-grids",
+    "unverified-product-claims"
+  ]
+}

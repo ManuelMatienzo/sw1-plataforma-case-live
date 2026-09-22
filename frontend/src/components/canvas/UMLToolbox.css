@@ -1,0 +1,82 @@
+.uml-toolbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--color-bg-elevated);
+  border-right: 1px solid var(--color-border);
+  width: 64px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.uml-toolbox.is-expanded {
+  width: 200px;
+  align-items: stretch;
+}
+
+.uml-toolbox button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.uml-toolbox.is-expanded button {
+  width: 100%;
+  justify-content: flex-start;
+  padding-left: 0.5rem;
+}
+
+.uml-toolbox button span {
+  display: none;
+  margin-left: 0.75rem;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.uml-toolbox.is-expanded button span {
+  display: block;
+}
+
+.uml-toolbox-divider {
+  width: 24px;
+  height: 1px;
+  background: var(--color-border);
+  margin: 0.5rem auto;
+}
+
+.uml-toolbox.is-expanded .uml-toolbox-divider {
+  width: calc(100% - 1rem);
+}
+
+.uml-toolbox button:hover:not(:disabled) {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+
+.uml-toolbox button.is-active {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  border-color: var(--color-accent-soft);
+}
+
+.uml-toolbox button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+

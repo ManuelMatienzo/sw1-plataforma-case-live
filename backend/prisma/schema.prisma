@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RolUsuario {
+  ADMINISTRADOR
+  ANFITRION
+  COLABORADOR
+}
+
+enum EstadoProyecto {
+  ACTIVO
+  ARCHIVADO
+  ELIMINADO
+}
+
+enum EstadoSesion {
+  ABIERTA
+  EN_PAUSA
+  CERRADA
+}
+
+enum PermisoColaborador {
+  SOLO_LECTURA
+  EDICION_PARCIAL
+  EDICION_COMPLETA
+}
+
+model Usuario {
+  id             String         @id @default(uuid())
+  nombre         String         @db.VarChar(100)
+  email          String         @unique @db.VarChar(150)
+  passwordHash   String         @db.VarChar(255)
+  rol            RolUsuario     @default(COLABORADOR)
+  activo         Boolean        @default(true)
+  fechaCreacion  DateTime       @default(now())
+  ultimoAcceso   DateTime?
+
+  proyectos      Proyecto[]     @relation("PropietarioProyecto")
+  sesionesCreadas SesionColaborativa[] @relation("AnfitrionSesion")
+  participaciones ParticipanteSesion[]
+  auditorias     Auditoria[]
+
+  @@map("usuarios")
+}
+
+model Proyecto {
+  id                 String         @id @default(uuid())
+  nombre             String         @db.VarChar(200)
+  descripcion        String?        @db.Text
+  fechaCreacion      DateTime       @default(now())
+  fechaActualizacion DateTime       @updatedAt
+  estado             EstadoProyecto @default(ACTIVO)
+
+  propietarioId      String
+  propietario        Usuario        @relation("PropietarioProyecto", fields: [propietarioId], references: [id], onDelete: Cascade)
+
+  sesiones           SesionColaborativa[]
+  diagramas          DiagramaClases[]
+  artefactos         ArtefactoGenerado[]
+
+  @@map("proyectos")
+}
+
+model SesionColaborativa {
+  id           String             @id @default(uuid())
+  codigoAcceso String             @unique @db.VarChar(20)
+  nombre       String             @db.VarChar(150)
+  estado       EstadoSesion       @default(ABIERTA)
+  fechaInicio  DateTime           @default(now())
+  fechaFin     DateTime?
+
+  proyectoId   String
+  proyecto     Proyecto           @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+
+  anfitrionId  String
+  anfitrion    Usuario            @relation("AnfitrionSesion", fields: [anfitrionId], references: [id])
+
+  participantes ParticipanteSesion[]
+  mensajesChat  MensajeChat[]
+
+  @@map("sesiones_colaborativas")
+}
+
+model ParticipanteSesion {
+  id          String             @id @default(uuid())
+  sesionId    String
+  sesion      SesionColaborativa @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+
+  usuarioId   String
+  usuario     Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  permiso     PermisoColaborador @default(EDICION_PARCIAL)
+  conectado   Boolean            @default(true)
+  fechaUnion  DateTime           @default(now())
+
+  @@unique([sesionId, usuarioId])
+  @@map("participantes_sesion")
+}
+
+model MensajeChat {
+  id          String             @id @default(uuid())
+  sesionId    String
+  sesion      SesionColaborativa @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+
+  usuarioId   String
+  autorNombre String             @db.VarChar(100)
+  contenido   String             @db.Text
+  timestamp   DateTime           @default(now())
+
+  @@map("mensajes_chat")
+}
+
+model DiagramaClases {
+  id                 String   @id @default(uuid())
+  proyectoId         String
+  proyecto           Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+
+  version            Int      @default(1)
+  // Contenido del modelo UML guardado en formato JSON-B para alta flexibilidad y rendimiento
+  contenido          Json     @default("{\"classes\":[],\"relationships\":[]}")
+  fechaCreacion      DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  @@map("diagramas_clases")
+}
+
+model ArtefactoGenerado {
+  id            String   @id @default(uuid())
+  proyectoId    String
+  proyecto      Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+
+  tipo          String   @db.VarChar(50) // POSTGRES_DDL, SPRING_BOOT_ZIP, POSTMAN_JSON, MOBILE_APP
+  nombre        String   @db.VarChar(200)
+  rutaArchivo   String?  @db.VarChar(500)
+  metadata      Json?
+  fechaCreacion DateTime @default(now())
+
+  @@map("artefactos_generados")
+}
+
+model Auditoria {
+  id         String   @id @default(uuid())
+  usuarioId  String?
+  usuario    Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  accion     String   @db.VarChar(100)
+  entidad    String   @db.VarChar(50)
+  entidadId  String?
+  detalle    Json?
+  ipOrigen   String?  @db.VarChar(45)
+  timestamp  DateTime @default(now())
+
+  @@map("auditorias")
+}

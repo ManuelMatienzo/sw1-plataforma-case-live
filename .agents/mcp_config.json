@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "obsidian-mcp",
+        "C:\\Users\\HP\\Documents\\Universidad\\SW1\\Examen1\\proyectoe1-sw1-vault"
+      ]
+    }
+  }
+}
